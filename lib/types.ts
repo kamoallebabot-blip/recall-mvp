@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const MemorySchema = z.object({
   content: z.string().min(1).max(10000),
   embedding: z.array(z.number()).length(1536), // Standard embedding dimension
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const SearchQuerySchema = z.object({
