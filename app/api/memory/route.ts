@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server';
 import { nanoid } from 'nanoid';
 import { verifyApiKey, unauthorized } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import { getEmbedding } from '@/lib/openai';
 import { MemorySchema } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
@@ -24,10 +23,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { content, metadata } = parsed.data;
-
-    // Generate embedding
-    const embedding = await getEmbedding(content);
+    const { content, embedding, metadata } = parsed.data;
 
     // Store memory
     const { data, error } = await supabase

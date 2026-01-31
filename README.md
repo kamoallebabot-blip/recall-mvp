@@ -42,16 +42,27 @@ curl -X POST https://recall-api.vercel.app/api/memory \
   -H "Content-Type: application/json" \
   -d '{
     "content": "User prefers direct communication, no fluff",
+    "embedding": [0.123, -0.456, ...], 
     "metadata": {"type": "preference", "user_id": "user123"}
   }'
 ```
 
+**Note:** `embedding` must be a 1536-dimensional vector. Generate it using your preferred embedding model (OpenAI, Cohere, local models, etc.).
+
 ### 3. Search your memories
 
 ```bash
-curl "https://recall-api.vercel.app/api/search?query=communication%20style&limit=5" \
-  -H "Authorization: Bearer recall_xxxxxxx"
+curl -X POST https://recall-api.vercel.app/api/search \
+  -H "Authorization: Bearer recall_xxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "communication style",
+    "embedding": [0.123, -0.456, ...],
+    "limit": 5
+  }'
 ```
+
+**Note:** Generate the `embedding` for your search query using the same model you used for storing memories.
 
 Response:
 ```json
@@ -104,6 +115,7 @@ Store a new memory.
 ```json
 {
   "content": "The memory text (required, max 10k chars)",
+  "embedding": [0.123, -0.456, ...], // required: 1536-dim vector
   "metadata": {} // optional JSON object
 }
 ```
@@ -112,16 +124,21 @@ Store a new memory.
 
 ---
 
-### `GET /api/search`
+### `POST /api/search`
 
 Semantic search across your memories.
 
 **Headers:**
 - `Authorization: Bearer <api_key>`
 
-**Query params:**
-- `query` (required) - search text
-- `limit` (optional, default 10, max 100)
+**Body:**
+```json
+{
+  "query": "search text", // optional, for display/logging
+  "embedding": [0.123, -0.456, ...], // required: 1536-dim vector
+  "limit": 10 // optional, default 10, max 100
+}
+```
 
 **Response:** Array of memories with similarity scores
 
@@ -142,9 +159,10 @@ List recent memories (chronological).
 ## Tech Stack
 
 - **Next.js 14** - API routes
-- **Supabase** - PostgreSQL + pgvector
-- **OpenAI ada-002** - Embeddings
+- **Supabase** - PostgreSQL + pgvector for vector search
 - **Vercel** - Hosting
+
+**Why no embedding service?** Agents bring their own embeddings. Use whatever model you want - OpenAI, Cohere, local models, etc. We just store and search.
 
 ## Self-Hosting
 
@@ -154,7 +172,6 @@ List recent memories (chronological).
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-OPENAI_API_KEY=your_openai_key
 ```
 4. Deploy to Vercel or run locally: `npm run dev`
 

@@ -1,10 +1,9 @@
 import { NextRequest } from 'next/server';
 import { verifyApiKey, unauthorized } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import { getEmbedding } from '@/lib/openai';
 import { SearchQuerySchema } from '@/lib/types';
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   // Verify API key
   const agent = await verifyApiKey(req);
   if (!agent) {
@@ -12,12 +11,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { searchParams } = new URL(req.url);
-    const query = searchParams.get('query');
-    const limit = parseInt(searchParams.get('limit') || '10');
-
-    // Validate
-    const parsed = SearchQuerySchema.safeParse({ query, limit });
+    // Parse body
+    const body = await req.json();
+    const parsed = SearchQuerySchema.safeParse(body);
+    
     if (!parsed.success) {
       return Response.json(
         { error: 'Invalid request', details: parsed.error.issues },
@@ -25,13 +22,12 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Generate query embedding
-    const queryEmbedding = await getEmbedding(parsed.data.query);
+    const queryEmbedding = parsed.data.embedding;
 
     // Semantic search using pgvector
     const { data, error } = await supabase.rpc('search_memories', {
       query_embedding: queryEmbedding,
-      match_threshold: 0.7,
+      match_threshold: 0.5, // Lower threshold for broader matches
       match_count: parsed.data.limit,
       target_agent_id: agent.id,
     });

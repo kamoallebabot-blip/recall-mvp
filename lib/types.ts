@@ -2,11 +2,13 @@ import { z } from 'zod';
 
 export const MemorySchema = z.object({
   content: z.string().min(1).max(10000),
+  embedding: z.array(z.number()).length(1536), // Standard embedding dimension
   metadata: z.record(z.any()).optional(),
 });
 
 export const SearchQuerySchema = z.object({
-  query: z.string().min(1),
+  query: z.string().min(1).optional(), // Optional - for display/logging
+  embedding: z.array(z.number()).length(1536),
   limit: z.number().int().positive().max(100).optional().default(10),
 });
 
